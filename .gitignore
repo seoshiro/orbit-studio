@@ -1,0 +1,9 @@
+node_modules/
+dist/
+*.log
+evidence/
+public/version.json
+docs/CHECKPOINT.md
+scripts/refine-copy.mjs
+scripts/diagnose-layout.mjs
+scripts/inspect-text.mjs
