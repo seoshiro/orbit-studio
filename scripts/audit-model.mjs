@@ -33,9 +33,16 @@ try{
  await page.locator('#assembly').fill('0');await page.locator('#follow').click();await page.evaluate(()=>{const s=window.__ORBIT.state();scrollTo({top:s.scroll.start,behavior:'instant'});});await page.waitForTimeout(100);await record(page,'#assembly-scene canvas');
  const samples=await page.evaluate(async()=>{
   const initial=window.__ORBIT.state(),samples=[];
-  for(const [from,to] of [[0,1],[1,0]]){const start=performance.now();await new Promise(resolve=>{function frame(now){const fraction=Math.min(1,(now-start)/3000),ease=fraction*fraction*(3-2*fraction);scrollTo({top:initial.scroll.start+initial.scroll.range*(from+(to-from)*ease),behavior:'instant'});const s=window.__ORBIT.state();samples.push({from,to,progress:s.progress,explosion:s.assembly.explosion,scene:s.assembly});if(fraction<1)requestAnimationFrame(frame);else resolve();}requestAnimationFrame(frame);});}
+  for(const [from,to] of [[0,1],[1,0]]){
+   const start=performance.now();let frames=0;
+   // Slow software renderers get more time, retaining the same intermediate coverage.
+   await new Promise(resolve=>{function frame(now){const fraction=Math.min(1,(now-start)/3000,frames++/36),ease=fraction*fraction*(3-2*fraction);scrollTo({top:initial.scroll.start+initial.scroll.range*(from+(to-from)*ease),behavior:'instant'});const s=window.__ORBIT.state();samples.push({from,to,progress:s.progress,explosion:s.assembly.explosion,scene:s.assembly});if(fraction<1)requestAnimationFrame(frame);else resolve();}requestAnimationFrame(frame);});
+   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));const s=window.__ORBIT.state();samples.push({from,to,progress:s.progress,explosion:s.assembly.explosion,scene:s.assembly});
+  }
   return samples;
- });await finish(page,'assembly-forward-and-reverse');assert.ok(samples.length>30);samples.forEach((s,i)=>{assert.ok(s.progress>=0&&s.progress<=1);assert.ok(s.explosion>=0&&s.explosion<=1);bounds(s.scene,`motion frame ${i}`);});await page.waitForTimeout(100);assert.ok((await state(page)).assembly.explosion<.01);records.push({name:'continuous-scroll-forward-reverse',frames:samples.length});
+ });await finish(page,'assembly-forward-and-reverse');
+ for(const from of [0,1]){const segment=samples.filter(s=>s.from===from);assert.ok(segment.length>=36);assert.ok(Math.min(...segment.map(s=>s.explosion))<.03&&Math.max(...segment.map(s=>s.explosion))>.97,'both directions must cover the complete assembly');for(let i=1;i<segment.length;i++)assert.ok(from===0?segment[i].progress>=segment[i-1].progress-.012:segment[i].progress<=segment[i-1].progress+.012,'assembly must progress monotonically in each direction');}
+ samples.forEach((s,i)=>{assert.ok(s.progress>=0&&s.progress<=1);assert.ok(s.explosion>=0&&s.explosion<=1);bounds(s.scene,`motion frame ${i}`);});await page.waitForTimeout(100);assert.ok((await state(page)).assembly.explosion<.01);records.push({name:'continuous-scroll-forward-reverse',frames:samples.length});
  await page.locator('#scene').scrollIntoViewIfNeeded();await page.locator('#deploy').click();await page.waitForFunction(()=>window.__ORBIT.state().scene.deployment<.001);await page.locator('#deploy').click();await page.waitForFunction(()=>window.__ORBIT.state().scene.deployment===1);
  await record(page,'#scene canvas');const deployment=[];
  for(const target of [0,1]){await page.locator('#deploy').click();for(let j=0;j<18;j++){await page.waitForTimeout(90);const s=await state(page);bounds(s.scene,'wing animation');deployment.push(s.scene.deployment);}await page.waitForFunction(target=>Math.abs(window.__ORBIT.state().scene.deployment-target)<.001,target);}
