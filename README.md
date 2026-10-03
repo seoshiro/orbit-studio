@@ -37,10 +37,10 @@ npm run build
 npx playwright install chromium
 ```
 
-Start the production server, set `ORBIT_URL=http://127.0.0.1:5516/orbit-studio/`, then run `npm run test:browser` and `npm run test:browser:extra`. On Windows these scripts use installed Chrome; elsewhere they use Playwright Chromium. CI runs the complete production checks before GitHub Pages publication.
+Start the production server, set `ORBIT_URL=http://127.0.0.1:5516/orbit-studio/`, then run `npm run test:browser`, `npm run test:browser:extra` and `npm run test:browser:model`. On Windows these scripts use installed Chrome; elsewhere they use Playwright Chromium. CI runs the complete production checks before GitHub Pages publication.
 
 `scripts/motion.mjs` records actual canvas motion through MediaRecorder. `scripts/review-motion.mjs` decodes the clips into review frames. Generated screenshots, recordings and reports stay in the ignored local `evidence/` directory. Browser device emulation is used; physical phones and Safari are not claimed as tested.
 
 ## Credits
 
-Original application, geometry and schematic Earth texture. Three.js is MIT licensed; locally bundled Inter Variable is under the SIL Open Font License. Scientific references are credited for their equations and component explanations, with no NASA or ESA affiliation implied. No backend, analytics, paid generation or external API is required.
+Original application, geometry, foil normal/roughness textures and solar-cell texture. Earth uses the locally packaged NASA Blue Marble 2002 surface composite; see [asset attribution](docs/ASSETS.md). Three.js is MIT licensed; locally bundled Inter Variable is under the SIL Open Font License. Scientific references are credited for their equations and component explanations, with no NASA or ESA affiliation implied. No backend, analytics, paid generation or external API is required.
